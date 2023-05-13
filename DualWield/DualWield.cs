@@ -19,7 +19,6 @@ using System.Diagnostics;
 namespace DualWield;
 
 [BepInPlugin(ModGUID, ModName, ModVersion)]
-[BepInIncompatibility("org.bepinex.plugins.valheim_plus")]
 public class DualWield : BaseUnityPlugin
 {
 #if DPSLOG
@@ -676,48 +675,48 @@ public class DualWield : BaseUnityPlugin
 	}
 
 #if DPSLOG
-	[HarmonyPatch(typeof(Humanoid), nameof(Humanoid.OnDamaged))]
-	private static class dmg
-	{
-		private static void Postfix(HitData hit)
-		{
-			if (hit.m_attacker == Player.m_localPlayer.GetZDOID())
-			{
-				receivedDmg.Add(hit.GetTotalDamage());
-			}
-		}
-	}
+    [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.OnDamaged))]
+    private static class dmg
+    {
+        private static void Postfix(HitData hit)
+        {
+            if (hit.m_attacker == Player.m_localPlayer.GetZDOID())
+            {
+                receivedDmg.Add(hit.GetTotalDamage());
+            }
+        }
+    }
 
-	[HarmonyPatch(typeof(Attack), nameof(Attack.OnAttackDone))]
-	public static class Patch_atkdone
-	{
-		private static void Prefix(Attack __instance)
-		{
-			if (__instance.m_character is Player && (__instance.m_currentAttackCainLevel == __instance.m_attackChainLevels - 1 || __instance.m_attackChainLevels == 0))
-			{
-				bool dual = __instance.m_character.m_leftItem?.m_shared is { } leftHand && __instance.m_character.m_rightItem?.m_shared is { } rightHand && leftHand.m_itemType == ItemDrop.ItemData.ItemType.OneHandedWeapon && rightHand.m_itemType == ItemDrop.ItemData.ItemType.OneHandedWeapon;
-				stopwatch.Stop();
-				Debug.Log((!dual ? "Single wield: " : "Dual wield: ") + $" {string.Join(", ", receivedDmg)} dmg; total damage: {receivedDmg.Sum()} in {stopwatch.ElapsedMilliseconds} ms are {receivedDmg.Sum() / (stopwatch.ElapsedMilliseconds / 1000f)} dps");
-			}
-		}
-	}
+    [HarmonyPatch(typeof(Attack), nameof(Attack.Stop))]
+    public static class Patch_atkdone
+    {
+        private static void Prefix(Attack __instance)
+        {
+            if (__instance.m_character is Player && (__instance.m_currentAttackCainLevel == __instance.m_attackChainLevels - 1 || __instance.m_attackChainLevels == 0))
+            {
+                bool dual = __instance.m_character.m_leftItem?.m_shared is { } leftHand && __instance.m_character.m_rightItem?.m_shared is { } rightHand && leftHand.m_itemType == ItemDrop.ItemData.ItemType.OneHandedWeapon && rightHand.m_itemType == ItemDrop.ItemData.ItemType.OneHandedWeapon;
+                stopwatch.Stop();
+                Debug.Log((!dual ? "Single wield: " : "Dual wield: ") + $" {string.Join(", ", receivedDmg)} dmg; total damage: {receivedDmg.Sum()} in {stopwatch.ElapsedMilliseconds} ms are {receivedDmg.Sum() / (stopwatch.ElapsedMilliseconds / 1000f)} dps");
+            }
+        }
+    }
 
-	[HarmonyPatch(typeof(Humanoid), nameof(Humanoid.StartAttack))]
-	public static class Patch_Humanoid_StartAttack
-	{
-		private static void Postfix(Humanoid __instance, Attack? __state, bool __result)
-		{
-			Attack? w = __instance.m_currentAttack;
-			if (__result && __instance is Player && w?.m_currentAttackCainLevel == 0)
-			{
-				stopwatch.Restart();
-				receivedDmg.Clear();
-			}
-		}
-	}
+    [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.StartAttack))]
+    public static class Patch_Humanoid_StartAttack
+    {
+        private static void Postfix(Humanoid __instance, Attack? __state, bool __result)
+        {
+            Attack? w = __instance.m_currentAttack;
+            if (__result && __instance is Player && w?.m_currentAttackCainLevel == 0)
+            {
+                stopwatch.Restart();
+                receivedDmg.Clear();
+            }
+        }
+    }
 #endif
 
-	[HarmonyPatch(typeof(CharacterAnimEvent), nameof(CharacterAnimEvent.FixedUpdate))]
+    [HarmonyPatch(typeof(CharacterAnimEvent), nameof(CharacterAnimEvent.FixedUpdate))]
 	public static class Patch_CharacterAnimEvent_FixedUpdate
 	{
 		[UsedImplicitly]
